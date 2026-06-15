@@ -1,0 +1,1213 @@
+"""
+Ada CX GraphQL Schema
+Conceptual schema derived from Ada CX REST API surface covering AI agent configuration,
+conversation flows, knowledge sources, integrations, analytics, and channel management.
+"""
+
+# ─── Scalar Types ───────────────────────────────────────────────────────────
+
+scalar DateTime
+scalar JSON
+scalar URL
+scalar EmailAddress
+
+# ─── Enum Types ─────────────────────────────────────────────────────────────
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  ESCALATED
+  PENDING
+  RESOLVED
+}
+
+enum ConversationChannel {
+  CHAT
+  EMAIL
+  VOICE
+  WHATSAPP
+  MESSENGER
+  INSTAGRAM
+  SMS
+}
+
+enum MessageSender {
+  USER
+  AGENT
+  BOT
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  BUTTON
+  CARD
+  CAROUSEL
+  FILE
+  IMAGE
+  VIDEO
+  AUDIO
+  QUICK_REPLY
+  FORM
+}
+
+enum KnowledgeSourceType {
+  ARTICLE
+  FAQ
+  URL
+  FILE
+  ZENDESK
+  SALESFORCE
+  SERVICENOW
+  CUSTOM
+}
+
+enum KnowledgeSourceStatus {
+  ACTIVE
+  INACTIVE
+  INDEXING
+  FAILED
+  PENDING
+}
+
+enum ArticleStatus {
+  PUBLISHED
+  DRAFT
+  ARCHIVED
+}
+
+enum ActionMethod {
+  GET
+  POST
+  PUT
+  PATCH
+  DELETE
+}
+
+enum ActionAuthType {
+  NONE
+  BASIC
+  BEARER
+  API_KEY
+  OAUTH2
+}
+
+enum WebhookStatus {
+  ACTIVE
+  INACTIVE
+  FAILING
+}
+
+enum WebhookEvent {
+  CONVERSATION_STARTED
+  CONVERSATION_ENDED
+  CONVERSATION_ESCALATED
+  MESSAGE_RECEIVED
+  MESSAGE_SENT
+  USER_CREATED
+  USER_UPDATED
+  HANDOFF_REQUESTED
+  HANDOFF_COMPLETED
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ComplianceRequestType {
+  DATA_ACCESS
+  DATA_DELETION
+  DATA_PORTABILITY
+}
+
+enum ComplianceRequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum AgentStatus {
+  ONLINE
+  OFFLINE
+  BUSY
+  AWAY
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum IntegrationStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+  PENDING
+}
+
+enum AnalyticsPeriod {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  QUARTER
+  YEAR
+}
+
+enum VoiceCallStatus {
+  INITIATED
+  RINGING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  NO_ANSWER
+}
+
+enum HandoffStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  TIMED_OUT
+}
+
+# ─── Core Entity Types ───────────────────────────────────────────────────────
+
+type AIAgent {
+  id: ID!
+  name: String!
+  handle: String!
+  description: String
+  status: AgentStatus!
+  language: String!
+  fallbackLanguage: String
+  timezone: String
+  channels: [ConversationChannel!]!
+  knowledgeSources: [KnowledgeSource!]!
+  actions: [Action!]!
+  settings: AIAgentSettings!
+  analytics: AgentAnalytics
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AIAgentSettings {
+  greetingMessage: String
+  fallbackMessage: String
+  escalationMessage: String
+  handoffEnabled: Boolean!
+  handoffThreshold: Float
+  responseDelay: Int
+  maxConversationDuration: Int
+  collectUserInfo: Boolean!
+  persistConversationHistory: Boolean!
+  customCSS: String
+  brandColor: String
+  avatarUrl: URL
+}
+
+type Conversation {
+  id: ID!
+  status: ConversationStatus!
+  channel: ConversationChannel!
+  endUser: EndUser
+  agent: AIAgent!
+  messages: MessageConnection!
+  metadata: JSON
+  tags: [String!]
+  handoff: Handoff
+  voiceCall: VoiceCall
+  startedAt: DateTime!
+  endedAt: DateTime
+  lastActivityAt: DateTime!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Message {
+  id: ID!
+  conversationId: ID!
+  conversation: Conversation!
+  sender: MessageSender!
+  type: MessageType!
+  content: MessageContent!
+  attachments: [Attachment!]
+  metadata: JSON
+  isRead: Boolean!
+  sentAt: DateTime!
+  createdAt: DateTime!
+}
+
+type MessageContent {
+  text: String
+  buttons: [Button!]
+  cards: [Card!]
+  quickReplies: [QuickReply!]
+  form: Form
+  mediaUrl: URL
+  mediaType: String
+}
+
+type Button {
+  id: ID!
+  label: String!
+  value: String
+  url: URL
+  action: String
+}
+
+type Card {
+  id: ID!
+  title: String!
+  subtitle: String
+  imageUrl: URL
+  buttons: [Button!]
+}
+
+type QuickReply {
+  id: ID!
+  label: String!
+  value: String!
+}
+
+type Form {
+  id: ID!
+  fields: [FormField!]!
+  submitLabel: String!
+}
+
+type FormField {
+  id: ID!
+  name: String!
+  label: String!
+  type: String!
+  required: Boolean!
+  placeholder: String
+  options: [String!]
+}
+
+type Attachment {
+  id: ID!
+  filename: String!
+  mimeType: String!
+  size: Int!
+  url: URL!
+  createdAt: DateTime!
+}
+
+type EndUser {
+  id: ID!
+  externalId: String
+  email: EmailAddress
+  phone: String
+  name: String
+  firstName: String
+  lastName: String
+  locale: String
+  timezone: String
+  metadata: JSON
+  conversations: ConversationConnection!
+  tags: [String!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type KnowledgeSource {
+  id: ID!
+  name: String!
+  type: KnowledgeSourceType!
+  status: KnowledgeSourceStatus!
+  description: String
+  url: URL
+  language: String!
+  articleCount: Int!
+  articles: ArticleConnection!
+  lastSyncedAt: DateTime
+  syncSchedule: String
+  tags: [Tag!]
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Article {
+  id: ID!
+  knowledgeSource: KnowledgeSource!
+  title: String!
+  body: String!
+  summary: String
+  status: ArticleStatus!
+  language: String!
+  slug: String
+  externalId: String
+  url: URL
+  tags: [Tag!]
+  metadata: JSON
+  publishedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Tag {
+  id: ID!
+  name: String!
+  color: String
+  articleCount: Int!
+  createdAt: DateTime!
+}
+
+type Action {
+  id: ID!
+  name: String!
+  description: String
+  method: ActionMethod!
+  url: URL!
+  authType: ActionAuthType!
+  headers: [ActionHeader!]
+  queryParams: [ActionParam!]
+  bodySchema: JSON
+  responseMapping: JSON
+  timeout: Int
+  retryCount: Int
+  isEnabled: Boolean!
+  agent: AIAgent
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ActionHeader {
+  key: String!
+  value: String!
+  isSecret: Boolean!
+}
+
+type ActionParam {
+  key: String!
+  value: String!
+  description: String
+}
+
+type ActionExecution {
+  id: ID!
+  action: Action!
+  conversationId: ID!
+  requestPayload: JSON
+  responsePayload: JSON
+  statusCode: Int
+  success: Boolean!
+  errorMessage: String
+  durationMs: Int!
+  executedAt: DateTime!
+}
+
+type Webhook {
+  id: ID!
+  name: String!
+  url: URL!
+  status: WebhookStatus!
+  events: [WebhookEvent!]!
+  secret: String
+  headers: [WebhookHeader!]
+  retryCount: Int!
+  lastTriggeredAt: DateTime
+  deliveries: WebhookDeliveryConnection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type WebhookHeader {
+  key: String!
+  value: String!
+}
+
+type WebhookDelivery {
+  id: ID!
+  webhook: Webhook!
+  event: WebhookEvent!
+  payload: JSON!
+  statusCode: Int
+  success: Boolean!
+  responseBody: String
+  attemptCount: Int!
+  deliveredAt: DateTime
+  createdAt: DateTime!
+}
+
+type Integration {
+  id: ID!
+  name: String!
+  type: String!
+  status: IntegrationStatus!
+  config: JSON
+  credentials: JSON
+  agent: AIAgent
+  lastSyncedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Handoff {
+  id: ID!
+  conversationId: ID!
+  conversation: Conversation!
+  status: HandoffStatus!
+  reason: String
+  queueId: String
+  assignedAgentId: String
+  metadata: JSON
+  requestedAt: DateTime!
+  acceptedAt: DateTime
+  completedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type VoiceCall {
+  id: ID!
+  conversationId: ID!
+  status: VoiceCallStatus!
+  fromNumber: String!
+  toNumber: String!
+  duration: Int
+  recordingUrl: URL
+  transcriptUrl: URL
+  metadata: JSON
+  startedAt: DateTime!
+  endedAt: DateTime
+  createdAt: DateTime!
+}
+
+type DataExport {
+  id: ID!
+  name: String!
+  status: ExportStatus!
+  format: String!
+  dateRangeStart: DateTime!
+  dateRangeEnd: DateTime!
+  filters: JSON
+  downloadUrl: URL
+  fileSize: Int
+  recordCount: Int
+  requestedBy: String!
+  requestedAt: DateTime!
+  completedAt: DateTime
+  expiresAt: DateTime
+  createdAt: DateTime!
+}
+
+type ComplianceRequest {
+  id: ID!
+  type: ComplianceRequestType!
+  status: ComplianceRequestStatus!
+  endUserId: ID
+  email: EmailAddress
+  externalId: String
+  requestedBy: String!
+  notes: String
+  completedAt: DateTime
+  reportUrl: URL
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# ─── Analytics Types ─────────────────────────────────────────────────────────
+
+type AgentAnalytics {
+  agentId: ID!
+  period: AnalyticsPeriod!
+  startDate: DateTime!
+  endDate: DateTime!
+  totalConversations: Int!
+  resolvedConversations: Int!
+  escalatedConversations: Int!
+  avgResolutionTimeSeconds: Float!
+  avgFirstResponseTimeSeconds: Float!
+  satisfactionScore: Float
+  containmentRate: Float!
+  channelBreakdown: [ChannelMetric!]!
+  dailyMetrics: [DailyMetric!]!
+}
+
+type ChannelMetric {
+  channel: ConversationChannel!
+  conversationCount: Int!
+  percentage: Float!
+}
+
+type DailyMetric {
+  date: DateTime!
+  conversationCount: Int!
+  resolvedCount: Int!
+  escalatedCount: Int!
+  avgResolutionTimeSeconds: Float!
+}
+
+type ConversationAnalytics {
+  totalMessages: Int!
+  userMessages: Int!
+  botMessages: Int!
+  avgConversationDurationSeconds: Float!
+  topIntents: [IntentMetric!]!
+  topKnowledgeSources: [KnowledgeSourceMetric!]!
+}
+
+type IntentMetric {
+  intent: String!
+  count: Int!
+  percentage: Float!
+}
+
+type KnowledgeSourceMetric {
+  knowledgeSourceId: ID!
+  knowledgeSourceName: String!
+  hitCount: Int!
+  percentage: Float!
+}
+
+# ─── Connection / Pagination Types ───────────────────────────────────────────
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+  totalCount: Int!
+}
+
+type ConversationConnection {
+  edges: [ConversationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ConversationEdge {
+  node: Conversation!
+  cursor: String!
+}
+
+type MessageConnection {
+  edges: [MessageEdge!]!
+  pageInfo: PageInfo!
+}
+
+type MessageEdge {
+  node: Message!
+  cursor: String!
+}
+
+type EndUserConnection {
+  edges: [EndUserEdge!]!
+  pageInfo: PageInfo!
+}
+
+type EndUserEdge {
+  node: EndUser!
+  cursor: String!
+}
+
+type KnowledgeSourceConnection {
+  edges: [KnowledgeSourceEdge!]!
+  pageInfo: PageInfo!
+}
+
+type KnowledgeSourceEdge {
+  node: KnowledgeSource!
+  cursor: String!
+}
+
+type ArticleConnection {
+  edges: [ArticleEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ArticleEdge {
+  node: Article!
+  cursor: String!
+}
+
+type ActionConnection {
+  edges: [ActionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type ActionEdge {
+  node: Action!
+  cursor: String!
+}
+
+type WebhookConnection {
+  edges: [WebhookEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WebhookEdge {
+  node: Webhook!
+  cursor: String!
+}
+
+type WebhookDeliveryConnection {
+  edges: [WebhookDeliveryEdge!]!
+  pageInfo: PageInfo!
+}
+
+type WebhookDeliveryEdge {
+  node: WebhookDelivery!
+  cursor: String!
+}
+
+type TagConnection {
+  edges: [TagEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TagEdge {
+  node: Tag!
+  cursor: String!
+}
+
+type IntegrationConnection {
+  edges: [IntegrationEdge!]!
+  pageInfo: PageInfo!
+}
+
+type IntegrationEdge {
+  node: Integration!
+  cursor: String!
+}
+
+type DataExportConnection {
+  edges: [DataExportEdge!]!
+  pageInfo: PageInfo!
+}
+
+type DataExportEdge {
+  node: DataExport!
+  cursor: String!
+}
+
+# ─── Input Types ─────────────────────────────────────────────────────────────
+
+input ConversationFilterInput {
+  status: ConversationStatus
+  channel: ConversationChannel
+  endUserId: ID
+  agentId: ID
+  startedAfter: DateTime
+  startedBefore: DateTime
+  tags: [String!]
+  hasHandoff: Boolean
+}
+
+input ConversationSortInput {
+  field: String!
+  order: SortOrder!
+}
+
+input CreateEndUserInput {
+  externalId: String
+  email: EmailAddress
+  phone: String
+  name: String
+  firstName: String
+  lastName: String
+  locale: String
+  timezone: String
+  metadata: JSON
+  tags: [String!]
+}
+
+input UpdateEndUserInput {
+  email: EmailAddress
+  phone: String
+  name: String
+  firstName: String
+  lastName: String
+  locale: String
+  timezone: String
+  metadata: JSON
+  tags: [String!]
+}
+
+input CreateKnowledgeSourceInput {
+  name: String!
+  type: KnowledgeSourceType!
+  description: String
+  url: URL
+  language: String!
+  syncSchedule: String
+  tagIds: [ID!]
+}
+
+input UpdateKnowledgeSourceInput {
+  name: String
+  description: String
+  url: URL
+  language: String
+  syncSchedule: String
+  tagIds: [ID!]
+}
+
+input CreateArticleInput {
+  knowledgeSourceId: ID!
+  title: String!
+  body: String!
+  summary: String
+  status: ArticleStatus!
+  language: String!
+  slug: String
+  externalId: String
+  url: URL
+  tagIds: [ID!]
+  metadata: JSON
+}
+
+input UpdateArticleInput {
+  title: String
+  body: String
+  summary: String
+  status: ArticleStatus
+  language: String
+  slug: String
+  url: URL
+  tagIds: [ID!]
+  metadata: JSON
+}
+
+input CreateActionInput {
+  name: String!
+  description: String
+  method: ActionMethod!
+  url: URL!
+  authType: ActionAuthType!
+  headers: [ActionHeaderInput!]
+  queryParams: [ActionParamInput!]
+  bodySchema: JSON
+  responseMapping: JSON
+  timeout: Int
+  retryCount: Int
+  agentId: ID
+}
+
+input UpdateActionInput {
+  name: String
+  description: String
+  method: ActionMethod
+  url: URL
+  authType: ActionAuthType
+  headers: [ActionHeaderInput!]
+  queryParams: [ActionParamInput!]
+  bodySchema: JSON
+  responseMapping: JSON
+  timeout: Int
+  retryCount: Int
+  isEnabled: Boolean
+}
+
+input ActionHeaderInput {
+  key: String!
+  value: String!
+  isSecret: Boolean!
+}
+
+input ActionParamInput {
+  key: String!
+  value: String!
+  description: String
+}
+
+input CreateWebhookInput {
+  name: String!
+  url: URL!
+  events: [WebhookEvent!]!
+  secret: String
+  headers: [WebhookHeaderInput!]
+  retryCount: Int
+}
+
+input UpdateWebhookInput {
+  name: String
+  url: URL
+  events: [WebhookEvent!]
+  secret: String
+  headers: [WebhookHeaderInput!]
+  retryCount: Int
+  status: WebhookStatus
+}
+
+input WebhookHeaderInput {
+  key: String!
+  value: String!
+}
+
+input CreateDataExportInput {
+  name: String!
+  format: String!
+  dateRangeStart: DateTime!
+  dateRangeEnd: DateTime!
+  filters: JSON
+}
+
+input CreateComplianceRequestInput {
+  type: ComplianceRequestType!
+  endUserId: ID
+  email: EmailAddress
+  externalId: String
+  notes: String
+}
+
+input UpdateAIAgentSettingsInput {
+  greetingMessage: String
+  fallbackMessage: String
+  escalationMessage: String
+  handoffEnabled: Boolean
+  handoffThreshold: Float
+  responseDelay: Int
+  maxConversationDuration: Int
+  collectUserInfo: Boolean
+  persistConversationHistory: Boolean
+  customCSS: String
+  brandColor: String
+  avatarUrl: URL
+}
+
+input SendMessageInput {
+  conversationId: ID!
+  type: MessageType!
+  content: MessageContentInput!
+  attachments: [ID!]
+  metadata: JSON
+}
+
+input MessageContentInput {
+  text: String
+  buttons: [ButtonInput!]
+  cards: [CardInput!]
+  quickReplies: [QuickReplyInput!]
+  mediaUrl: URL
+  mediaType: String
+}
+
+input ButtonInput {
+  label: String!
+  value: String
+  url: URL
+  action: String
+}
+
+input CardInput {
+  title: String!
+  subtitle: String
+  imageUrl: URL
+  buttons: [ButtonInput!]
+}
+
+input QuickReplyInput {
+  label: String!
+  value: String!
+}
+
+input CreateTagInput {
+  name: String!
+  color: String
+}
+
+input UpdateTagInput {
+  name: String
+  color: String
+}
+
+input AnalyticsFilterInput {
+  agentId: ID
+  period: AnalyticsPeriod!
+  startDate: DateTime!
+  endDate: DateTime!
+  channels: [ConversationChannel!]
+}
+
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+# ─── Payload / Response Types ─────────────────────────────────────────────────
+
+type EndUserPayload {
+  endUser: EndUser
+  errors: [UserError!]
+}
+
+type KnowledgeSourcePayload {
+  knowledgeSource: KnowledgeSource
+  errors: [UserError!]
+}
+
+type ArticlePayload {
+  article: Article
+  errors: [UserError!]
+}
+
+type ActionPayload {
+  action: Action
+  errors: [UserError!]
+}
+
+type WebhookPayload {
+  webhook: Webhook
+  errors: [UserError!]
+}
+
+type DataExportPayload {
+  dataExport: DataExport
+  errors: [UserError!]
+}
+
+type ComplianceRequestPayload {
+  complianceRequest: ComplianceRequest
+  errors: [UserError!]
+}
+
+type MessagePayload {
+  message: Message
+  errors: [UserError!]
+}
+
+type TagPayload {
+  tag: Tag
+  errors: [UserError!]
+}
+
+type AIAgentSettingsPayload {
+  settings: AIAgentSettings
+  errors: [UserError!]
+}
+
+type DeletePayload {
+  id: ID!
+  success: Boolean!
+  errors: [UserError!]
+}
+
+type SyncPayload {
+  knowledgeSource: KnowledgeSource
+  success: Boolean!
+  errors: [UserError!]
+}
+
+type UserError {
+  field: String
+  message: String!
+  code: String
+}
+
+# ─── Query Root ───────────────────────────────────────────────────────────────
+
+type Query {
+  # AI Agent
+  agent(id: ID!): AIAgent
+  agents(pagination: PaginationInput): [AIAgent!]!
+
+  # Conversations
+  conversation(id: ID!): Conversation
+  conversations(
+    filter: ConversationFilterInput
+    sort: ConversationSortInput
+    pagination: PaginationInput
+  ): ConversationConnection!
+  conversationAnalytics(conversationId: ID!): ConversationAnalytics
+
+  # Messages
+  message(id: ID!): Message
+  messages(
+    conversationId: ID!
+    pagination: PaginationInput
+  ): MessageConnection!
+
+  # End Users
+  endUser(id: ID!): EndUser
+  endUserByExternalId(externalId: String!): EndUser
+  endUserByEmail(email: EmailAddress!): EndUser
+  endUsers(
+    search: String
+    pagination: PaginationInput
+  ): EndUserConnection!
+
+  # Knowledge Sources
+  knowledgeSource(id: ID!): KnowledgeSource
+  knowledgeSources(
+    status: KnowledgeSourceStatus
+    type: KnowledgeSourceType
+    pagination: PaginationInput
+  ): KnowledgeSourceConnection!
+
+  # Articles
+  article(id: ID!): Article
+  articles(
+    knowledgeSourceId: ID
+    status: ArticleStatus
+    language: String
+    tagIds: [ID!]
+    search: String
+    pagination: PaginationInput
+  ): ArticleConnection!
+
+  # Tags
+  tag(id: ID!): Tag
+  tags(pagination: PaginationInput): TagConnection!
+
+  # Actions
+  action(id: ID!): Action
+  actions(
+    agentId: ID
+    isEnabled: Boolean
+    pagination: PaginationInput
+  ): ActionConnection!
+  actionExecution(id: ID!): ActionExecution
+
+  # Webhooks
+  webhook(id: ID!): Webhook
+  webhooks(
+    status: WebhookStatus
+    pagination: PaginationInput
+  ): WebhookConnection!
+  webhookDelivery(id: ID!): WebhookDelivery
+  webhookDeliveries(
+    webhookId: ID!
+    pagination: PaginationInput
+  ): WebhookDeliveryConnection!
+
+  # Integrations
+  integration(id: ID!): Integration
+  integrations(
+    status: IntegrationStatus
+    pagination: PaginationInput
+  ): IntegrationConnection!
+
+  # Handoffs
+  handoff(id: ID!): Handoff
+
+  # Voice
+  voiceCall(id: ID!): VoiceCall
+
+  # Data Exports
+  dataExport(id: ID!): DataExport
+  dataExports(
+    status: ExportStatus
+    pagination: PaginationInput
+  ): DataExportConnection!
+
+  # Compliance
+  complianceRequest(id: ID!): ComplianceRequest
+  complianceRequests(
+    status: ComplianceRequestStatus
+    type: ComplianceRequestType
+    pagination: PaginationInput
+  ): [ComplianceRequest!]!
+
+  # Analytics
+  agentAnalytics(filter: AnalyticsFilterInput!): AgentAnalytics
+}
+
+# ─── Mutation Root ────────────────────────────────────────────────────────────
+
+type Mutation {
+  # AI Agent Settings
+  updateAIAgentSettings(
+    agentId: ID!
+    input: UpdateAIAgentSettingsInput!
+  ): AIAgentSettingsPayload!
+
+  # End Users
+  createEndUser(input: CreateEndUserInput!): EndUserPayload!
+  updateEndUser(id: ID!, input: UpdateEndUserInput!): EndUserPayload!
+  deleteEndUser(id: ID!): DeletePayload!
+  mergeEndUsers(primaryId: ID!, secondaryId: ID!): EndUserPayload!
+
+  # Conversations
+  closeConversation(id: ID!): Conversation
+  reopenConversation(id: ID!): Conversation
+  tagConversation(id: ID!, tags: [String!]!): Conversation
+  untagConversation(id: ID!, tags: [String!]!): Conversation
+
+  # Messages
+  sendMessage(input: SendMessageInput!): MessagePayload!
+  markMessageRead(id: ID!): Message
+
+  # Knowledge Sources
+  createKnowledgeSource(input: CreateKnowledgeSourceInput!): KnowledgeSourcePayload!
+  updateKnowledgeSource(id: ID!, input: UpdateKnowledgeSourceInput!): KnowledgeSourcePayload!
+  deleteKnowledgeSource(id: ID!): DeletePayload!
+  syncKnowledgeSource(id: ID!): SyncPayload!
+  enableKnowledgeSource(id: ID!): KnowledgeSourcePayload!
+  disableKnowledgeSource(id: ID!): KnowledgeSourcePayload!
+
+  # Articles
+  createArticle(input: CreateArticleInput!): ArticlePayload!
+  updateArticle(id: ID!, input: UpdateArticleInput!): ArticlePayload!
+  deleteArticle(id: ID!): DeletePayload!
+  publishArticle(id: ID!): ArticlePayload!
+  archiveArticle(id: ID!): ArticlePayload!
+
+  # Tags
+  createTag(input: CreateTagInput!): TagPayload!
+  updateTag(id: ID!, input: UpdateTagInput!): TagPayload!
+  deleteTag(id: ID!): DeletePayload!
+
+  # Actions
+  createAction(input: CreateActionInput!): ActionPayload!
+  updateAction(id: ID!, input: UpdateActionInput!): ActionPayload!
+  deleteAction(id: ID!): DeletePayload!
+  enableAction(id: ID!): ActionPayload!
+  disableAction(id: ID!): ActionPayload!
+  testAction(id: ID!, payload: JSON): ActionExecution
+
+  # Webhooks
+  createWebhook(input: CreateWebhookInput!): WebhookPayload!
+  updateWebhook(id: ID!, input: UpdateWebhookInput!): WebhookPayload!
+  deleteWebhook(id: ID!): DeletePayload!
+  activateWebhook(id: ID!): WebhookPayload!
+  deactivateWebhook(id: ID!): WebhookPayload!
+  retryWebhookDelivery(deliveryId: ID!): WebhookDelivery
+
+  # Data Exports
+  createDataExport(input: CreateDataExportInput!): DataExportPayload!
+  cancelDataExport(id: ID!): DataExportPayload!
+
+  # Compliance
+  createComplianceRequest(input: CreateComplianceRequestInput!): ComplianceRequestPayload!
+}
+
+# ─── Subscription Root ────────────────────────────────────────────────────────
+
+type Subscription {
+  # Conversation real-time updates
+  conversationUpdated(agentId: ID!): Conversation
+  conversationStarted(agentId: ID!): Conversation
+  conversationEnded(agentId: ID!): Conversation
+  conversationEscalated(agentId: ID!): Conversation
+
+  # Message real-time updates
+  messageReceived(conversationId: ID!): Message
+  messageSent(conversationId: ID!): Message
+
+  # End user updates
+  endUserUpdated(id: ID!): EndUser
+
+  # Knowledge source sync status
+  knowledgeSourceSynced(id: ID!): KnowledgeSource
+
+  # Handoff status updates
+  handoffUpdated(conversationId: ID!): Handoff
+
+  # Voice call status
+  voiceCallUpdated(conversationId: ID!): VoiceCall
+
+  # Export completion
+  dataExportCompleted(id: ID!): DataExport
+
+  # Webhook delivery status
+  webhookDeliveryAttempted(webhookId: ID!): WebhookDelivery
+}
