@@ -30,6 +30,17 @@ tags:
 - Chatbots
 - Conversational AI
 - Customer Service
+- Customer-Support
+- CX
+- Generative AI
+- Knowledge
+- Messaging
+tags_raw:
+- AI Agent
+- Automation
+- Chatbots
+- Conversational AI
+- Customer Service
 - Customer Support
 - CX
 - Generative AI
@@ -45,6 +56,12 @@ apis:
   humanURL: https://docs.ada.cx/reference/introduction/overview
   baseURL: https://{handle}.ada.support/api/v2
   tags:
+  - AI Agent
+  - Conversations
+  - Customer Service
+  - Knowledge
+  - Webhook
+  tags_raw:
   - AI Agent
   - Conversations
   - Customer Service
@@ -106,6 +123,10 @@ apis:
   baseURL: https://{handle}.ada.support/api/v2
   tags:
   - Actions
+  - Integration
+  - Tools
+  tags_raw:
+  - Actions
   - Integrations
   - Tools
   properties:
@@ -144,6 +165,9 @@ apis:
   humanURL: https://docs.ada.cx/reference/webhooks/overview
   baseURL: https://{handle}.ada.support/api/v2
   tags:
+  - Event
+  - Webhook
+  tags_raw:
   - Events
   - Webhooks
   properties:
