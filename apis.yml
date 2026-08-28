@@ -5,6 +5,17 @@ description: Ada (formerly Ada Support) is an AI customer service automation pla
   using a generative AI agent grounded in a customer's knowledge sources. Ada exposes
   REST APIs for managing conversations, end users, knowledge sources and articles,
   integrations (Actions), data export, data compliance, and webhooks.
+deliveryModel:
+  model: saas
+  open_source: false
+  commercial: true
+  callable_host: false
+  label: Hosted service · you call their endpoint
+  confidence: medium
+  source:
+  - pricing
+  generated: '2026-08-28'
+  method: derived
 accessModel:
   pricing: free
   onboarding: unknown
